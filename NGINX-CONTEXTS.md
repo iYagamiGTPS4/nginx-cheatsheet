@@ -7,11 +7,11 @@ Contexts define the scope and purpose of configuration directives.
 Global settings for the entire Nginx process.
 
 ```nginx
-# Main context (outside any other context)
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
+# Main context - global settings for entire nginx process
+user nginx;                              # Run worker processes as nginx user
+worker_processes auto;                   # Auto-detect optimal number of worker processes
+error_log /var/log/nginx/error.log;     # Log errors to specified file
+pid /run/nginx.pid;                     # Store master process PID in this file
 ```
 
 ### Common Main Directives
@@ -26,9 +26,9 @@ Controls how Nginx handles connections.
 
 ```nginx
 events {
-    worker_connections 1024;
-    use epoll;
-    multi_accept on;
+    worker_connections 1024;           # Maximum connections per worker process
+    use epoll;                         # Use epoll event method (Linux)
+    multi_accept on;                   # Accept multiple connections at once
 }
 ```
 
@@ -43,18 +43,18 @@ Contains all web server configuration.
 
 ```nginx
 http {
-    # Global HTTP settings
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
+    # Global HTTP settings for all virtual hosts
+    include /etc/nginx/mime.types;        # Include MIME type definitions
+    default_type application/octet-stream; # Default MIME type for unknown files
     
-    # Logging
-    access_log /var/log/nginx/access.log;
+    # Logging configuration
+    access_log /var/log/nginx/access.log; # Log all HTTP requests
     
-    # Gzip compression
-    gzip on;
+    # Gzip compression for bandwidth optimization
+    gzip on;                              # Enable gzip compression
     
-    # Server blocks go here
-    server { }
+    # Server blocks define virtual hosts
+    server { }                            # Virtual host configuration goes here
 }
 ```
 
@@ -70,10 +70,10 @@ Defines a virtual host.
 
 ```nginx
 server {
-    listen 80;
-    server_name example.com;
-    root /var/www/html;
-    index index.html;
+    listen 80;                           # Listen on port 80 for HTTP requests
+    server_name example.com;             # Match requests for this domain
+    root /var/www/html;                 # Document root directory for files
+    index index.html;                   # Default file to serve for directory requests
 }
 ```
 
@@ -89,15 +89,15 @@ Matches URLs and defines how to handle them.
 
 ```nginx
 location / {
-    try_files $uri $uri/ /index.html;
+    try_files $uri $uri/ /index.html;   # Try file, then directory, then fallback
 }
 
 location /api/ {
-    proxy_pass http://backend;
+    proxy_pass http://backend;          # Forward API requests to backend server
 }
 
 location ~* \.(css|js|png)$ {
-    expires 1y;
+    expires 1y;                        # Cache static files for 1 year
 }
 ```
 

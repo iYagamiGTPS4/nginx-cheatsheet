@@ -6,141 +6,141 @@ Variables store request and server information for use in configuration.
 
 ### Basic Request Info
 ```nginx
-$request_uri          # Full URI with query string
-$uri                  # URI without query string
-$args                 # Query string
-$query_string         # Same as $args
-$request_method       # GET, POST, PUT, DELETE, etc.
-$request_body         # Request body content
-$request_length       # Request body length
-$request_time         # Request processing time
+$request_uri          # Full URI with query string (e.g., /api/users?id=123)
+$uri                  # URI without query string (e.g., /api/users)
+$args                 # Query string parameters (e.g., id=123&name=john)
+$query_string         # Same as $args (alternative name)
+$request_method       # HTTP method (GET, POST, PUT, DELETE, etc.)
+$request_body         # Request body content (POST data)
+$request_length       # Request body length in bytes
+$request_time         # Request processing time in seconds
 ```
 
 ### Headers
 ```nginx
-$http_host            # Host header
-$http_user_agent      # User-Agent header
-$http_referer         # Referer header
-$http_x_forwarded_for # X-Forwarded-For header
-$http_accept          # Accept header
-$http_accept_encoding # Accept-Encoding header
-$http_accept_language # Accept-Language header
-$http_cookie          # Cookie header
-$http_authorization   # Authorization header
+$http_host            # Host header from client request
+$http_user_agent      # User-Agent header (browser/client info)
+$http_referer         # Referer header (previous page URL)
+$http_x_forwarded_for # X-Forwarded-For header (client IP chain)
+$http_accept          # Accept header (content types client accepts)
+$http_accept_encoding # Accept-Encoding header (compression support)
+$http_accept_language # Accept-Language header (preferred languages)
+$http_cookie          # Cookie header (client cookies)
+$http_authorization   # Authorization header (authentication data)
 ```
 
 ### Custom Headers
 ```nginx
-$http_custom_header   # Any header (lowercase, hyphens to underscores)
-$http_x_real_ip       # X-Real-IP header
-$http_x_forwarded_proto # X-Forwarded-Proto header
+$http_custom_header   # Any custom header (lowercase, hyphens to underscores)
+$http_x_real_ip       # X-Real-IP header (real client IP from proxy)
+$http_x_forwarded_proto # X-Forwarded-Proto header (original protocol)
 ```
 
 ## Response Variables
 
 ### Status and Content
 ```nginx
-$status               # HTTP status code
-$body_bytes_sent      # Bytes sent to client
-$bytes_sent           # Same as $body_bytes_sent
-$content_length       # Content-Length header
-$content_type         # Content-Type header
+$status               # HTTP status code (200, 404, 500, etc.)
+$body_bytes_sent      # Bytes sent to client (response body size)
+$bytes_sent           # Same as $body_bytes_sent (alternative name)
+$content_length       # Content-Length header value
+$content_type         # Content-Type header value
 ```
 
 ## Connection Variables
 
 ### Client Info
 ```nginx
-$remote_addr          # Client IP address
-$remote_port          # Client port
-$remote_user          # Username from basic auth
-$binary_remote_addr   # Binary representation of client IP
+$remote_addr          # Client IP address (e.g., 192.168.1.100)
+$remote_port          # Client port number
+$remote_user          # Username from basic authentication
+$binary_remote_addr   # Binary representation of client IP (for rate limiting)
 ```
 
 ### Server Info
 ```nginx
-$server_addr          # Server IP address
+$server_addr          # Server IP address (e.g., 192.168.1.10)
 $server_name          # Server name from server_name directive
-$server_port          # Server port
-$server_protocol      # HTTP protocol version
+$server_port          # Server port number (80, 443, etc.)
+$server_protocol      # HTTP protocol version (HTTP/1.1, HTTP/2.0)
 ```
 
 ## Time Variables
 
 ```nginx
-$time_iso8601         # ISO 8601 time format
-$time_local           # Local time format
-$msec                 # Current time in seconds with milliseconds
-$date_gmt             # GMT date
-$date_local           # Local date
+$time_iso8601         # ISO 8601 time format (2023-12-01T10:30:45+00:00)
+$time_local           # Local time format (01/Dec/2023:10:30:45 +0000)
+$msec                 # Current time in seconds with milliseconds (1701432645.123)
+$date_gmt             # GMT date string
+$date_local           # Local date string
 ```
 
 ## File Variables
 
 ```nginx
-$document_root        # Root directory from root directive
-$document_uri         # Same as $uri
-$realpath_root        # Real path of document root
-$request_filename     # Full path to requested file
+$document_root        # Root directory from root directive (e.g., /var/www/html)
+$document_uri         # Same as $uri (URI without query string)
+$realpath_root        # Real path of document root (resolved symlinks)
+$request_filename     # Full path to requested file (e.g., /var/www/html/index.html)
 ```
 
 ## Scheme and Protocol
 
 ```nginx
-$scheme               # http or https
-$https                # "on" if HTTPS, empty otherwise
-$request_scheme       # Same as $scheme
+$scheme               # Protocol scheme (http or https)
+$https                # "on" if HTTPS connection, empty otherwise
+$request_scheme       # Same as $scheme (alternative name)
 $ssl_protocol         # SSL protocol version (TLSv1.2, TLSv1.3)
-$ssl_cipher           # SSL cipher suite
+$ssl_cipher           # SSL cipher suite used for encryption
 ```
 
 ## System Variables
 
 ```nginx
 $host                 # Actual host (from Host header or server_name)
-$hostname             # Machine hostname
-$nginx_version        # Nginx version
-$pid                  # Worker process PID
+$hostname             # Machine hostname (e.g., web-server-01)
+$nginx_version        # Nginx version (e.g., 1.24.0)
+$pid                  # Worker process PID (process ID)
 ```
 
 ## Connection Variables
 
 ```nginx
-$connection           # Connection serial number
-$connection_requests  # Number of requests in connection
-$pipe                 # "p" if pipelined, "." otherwise
+$connection           # Connection serial number (unique per connection)
+$connection_requests  # Number of requests in current connection
+$pipe                 # "p" if pipelined request, "." otherwise
 ```
 
 ## Upstream Variables
 
 ```nginx
-$upstream_addr        # Upstream server address
-$upstream_status      # Upstream response status
-$upstream_response_time # Upstream response time
-$upstream_connect_time # Upstream connect time
-$upstream_header_time # Upstream header time
-$upstream_bytes_received # Bytes received from upstream
-$upstream_bytes_sent # Bytes sent to upstream
-$upstream_cache_status # Cache status (HIT, MISS, BYPASS, EXPIRED)
+$upstream_addr        # Upstream server address (e.g., 192.168.1.10:8080)
+$upstream_status      # Upstream response status (200, 404, 502, etc.)
+$upstream_response_time # Upstream response time in seconds
+$upstream_connect_time # Upstream connect time in seconds
+$upstream_header_time # Upstream header time in seconds
+$upstream_bytes_received # Bytes received from upstream server
+$upstream_bytes_sent # Bytes sent to upstream server
+$upstream_cache_status # Cache status (HIT, MISS, BYPASS, EXPIRED, STALE)
 ```
 
 ## HTTP/2 Variables
 
 ```nginx
-$http2                # HTTP/2 protocol version
-$http2_stream_id      # HTTP/2 stream ID
-$http2_stream_priority # HTTP/2 stream priority
-$http2_stream_dependency # HTTP/2 stream dependency
+$http2                # HTTP/2 protocol version (e.g., 2.0)
+$http2_stream_id      # HTTP/2 stream ID (unique per stream)
+$http2_stream_priority # HTTP/2 stream priority (0-255)
+$http2_stream_dependency # HTTP/2 stream dependency (parent stream ID)
 ```
 
 ## Cache Variables
 
 ```nginx
 $upstream_cache_status # Cache status (HIT, MISS, BYPASS, EXPIRED, STALE, UPDATING)
-$cache_status         # Same as $upstream_cache_status
-$cache_valid          # Cache validity status
-$cache_age            # Cache age in seconds
-$cache_modified       # Cache modification time
+$cache_status         # Same as $upstream_cache_status (alternative name)
+$cache_valid          # Cache validity status (1 if valid, 0 if expired)
+$cache_age            # Cache age in seconds since creation
+$cache_modified       # Cache modification time (Unix timestamp)
 ```
 
 ## Rate Limiting Variables
@@ -148,44 +148,44 @@ $cache_modified       # Cache modification time
 ```nginx
 $limit_req_status     # Rate limit status (PASS, DELAY, REJECT)
 $limit_conn_status    # Connection limit status (PASS, REJECT)
-$limit_rate           # Current rate limit
-$limit_conn           # Current connection limit
+$limit_rate           # Current rate limit (requests per second)
+$limit_conn           # Current connection limit (max connections)
 ```
 
 ## Real-time Monitoring Variables
 
 ```nginx
-$connections_active   # Active connections
-$connections_reading  # Connections in reading state
-$connections_writing  # Connections in writing state
-$connections_waiting  # Connections in waiting state
-$connections_accepted # Total accepted connections
-$connections_handled # Total handled connections
-$requests_total      # Total requests
+$connections_active   # Active connections (currently processing)
+$connections_reading  # Connections in reading state (receiving request)
+$connections_writing  # Connections in writing state (sending response)
+$connections_waiting  # Connections in waiting state (idle)
+$connections_accepted # Total accepted connections (since startup)
+$connections_handled # Total handled connections (since startup)
+$requests_total      # Total requests (since startup)
 ```
 
 ## Performance Variables
 
 ```nginx
-$request_time         # Request processing time
-$upstream_response_time # Upstream response time
-$upstream_connect_time # Upstream connect time
-$upstream_header_time # Upstream header time
-$pipe                 # "p" if pipelined, "." otherwise
-$connection_requests  # Number of requests in connection
-$connection           # Connection serial number
+$request_time         # Request processing time in seconds
+$upstream_response_time # Upstream response time in seconds
+$upstream_connect_time # Upstream connect time in seconds
+$upstream_header_time # Upstream header time in seconds
+$pipe                 # "p" if pipelined request, "." otherwise
+$connection_requests  # Number of requests in current connection
+$connection           # Connection serial number (unique per connection)
 ```
 
 ## Security Variables
 
 ```nginx
-$ssl_protocol         # SSL protocol version
-$ssl_cipher           # SSL cipher suite
-$ssl_session_id       # SSL session ID
-$ssl_client_verify    # SSL client verification status
-$ssl_client_s_dn      # SSL client subject DN
-$ssl_client_i_dn      # SSL client issuer DN
-$ssl_client_fingerprint # SSL client certificate fingerprint
+$ssl_protocol         # SSL protocol version (TLSv1.2, TLSv1.3)
+$ssl_cipher           # SSL cipher suite used for encryption
+$ssl_session_id       # SSL session ID (unique per session)
+$ssl_client_verify    # SSL client verification status (SUCCESS, FAILED, NONE)
+$ssl_client_s_dn      # SSL client subject DN (certificate subject)
+$ssl_client_i_dn      # SSL client issuer DN (certificate issuer)
+$ssl_client_fingerprint # SSL client certificate fingerprint (SHA-1 hash)
 ```
 
 ## Custom Variables

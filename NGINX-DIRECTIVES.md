@@ -6,39 +6,39 @@ Essential directives organized by purpose and context.
 
 ### Basic Server Directives
 ```nginx
-listen 80;                    # Listen on port 80
-listen 443 ssl;              # Listen on port 443 with SSL
-listen 127.0.0.1:8080;       # Listen on specific IP and port
-listen [::]:80;              # IPv6 support
+listen 80;                    # Listen on HTTP port 80 (server)
+listen 443 ssl;              # Listen on HTTPS port 443 with SSL (server)
+listen 127.0.0.1:8080;       # Listen on specific IP and port (server)
+listen [::]:80;              # IPv6 support for port 80 (server)
 
-server_name example.com;     # Single domain
-server_name example.com www.example.com;  # Multiple domains
-server_name *.example.com;   # Wildcard subdomain
-server_name _;               # Catch-all server
+server_name example.com;     # Match single domain name (server)
+server_name example.com www.example.com;  # Match multiple domain names (server)
+server_name *.example.com;   # Match all subdomains with wildcard (server)
+server_name _;               # Catch-all server for unmatched requests (server)
 
-root /var/www/html;         # Document root directory
-index index.html index.htm;  # Default files to serve
+root /var/www/html;         # Document root directory for files (server, location)
+index index.html index.htm;  # Default files to serve for directory requests (server, location)
 ```
 
 ### Server Status and Logging
 ```nginx
-access_log /var/log/nginx/access.log;     # Access log
-access_log off;                          # Disable access log
-error_log /var/log/nginx/error.log warn; # Error log with level
+access_log /var/log/nginx/access.log;     # Log all HTTP requests to file (http, server, location)
+access_log off;                          # Disable access logging (http, server, location)
+error_log /var/log/nginx/error.log warn; # Log errors with warning level (main, http, server, location)
 
-return 404;                              # Return status code
-return 301 https://$server_name$request_uri;  # Redirect
+return 404;                              # Return HTTP 404 status code (server, location)
+return 301 https://$server_name$request_uri;  # Redirect to HTTPS (server, location)
 
-# Custom error pages
-error_page 404 /404.html;
-error_page 500 502 503 504 /50x.html;
-error_page 404 =200 /index.html;        # Return 200 instead of 404
+# Custom error pages for better user experience
+error_page 404 /404.html;                # Show custom 404 page (server, location)
+error_page 500 502 503 504 /50x.html;   # Show custom error page for server errors (server, location)
+error_page 404 =200 /index.html;        # Return 200 status with index.html for 404s (server, location)
 ```
 
 ### Server Flags
 ```nginx
-listen 80 default_server;                # Default server for port
-listen 443 ssl default_server;          # Default SSL server
+listen 80 default_server;                # Default server for port 80 (server)
+listen 443 ssl default_server;          # Default SSL server for port 443 (server)
 ```
 
 ## Location Matching
@@ -47,51 +47,51 @@ listen 443 ssl default_server;          # Default SSL server
 ```nginx
 # Exact match (highest priority)
 location = /exact {
-    # Only matches exactly "/exact"
+    # Only matches exactly "/exact" path (location)
 }
 
-# Prefix match
+# Prefix match for API routes
 location /api/ {
-    # Matches "/api/users", "/api/posts"
+    # Matches "/api/users", "/api/posts" etc. (location)
 }
 
 # Regex match (case sensitive)
 location ~ \.php$ {
-    # Matches files ending with .php
+    # Matches files ending with .php (location)
 }
 
-# Regex match (case insensitive)
+# Regex match (case insensitive) for static files
 location ~* \.(css|js|png|jpg)$ {
-    # Static files
+    # Matches static files with these extensions (location)
 }
 
-# Longest prefix match
+# Longest prefix match for static content
 location ^~ /static/ {
-    # Matches "/static/css/style.css"
+    # Matches "/static/css/style.css" with higher priority (location)
 }
 
-# Named location
+# Named location for fallback handling
 location @fallback {
-    # Used with try_files
+    # Used with try_files directive (location)
 }
 ```
 
 ### File Handling
 ```nginx
-try_files $uri $uri/ /index.html;        # File fallback chain
-try_files $uri $uri/ @fallback;          # Named location fallback
+try_files $uri $uri/ /index.html;        # Try file, then directory, then fallback (location)
+try_files $uri $uri/ @fallback;          # Use named location for fallback (location)
 
-autoindex on;                             # Directory listing
-autoindex_exact_size off;                # Human readable file sizes
-autoindex_localtime on;                  # Local time format
+autoindex on;                             # Enable directory listing (location)
+autoindex_exact_size off;                # Show human readable file sizes (location)
+autoindex_localtime on;                  # Use local time format (location)
 
-# Path aliases
-alias /path/to/files/;                   # Alias (different from root)
-root /var/www/html;                      # Document root
+# Path aliases for different document roots
+alias /path/to/files/;                   # Alias path (different from root) (location)
+root /var/www/html;                      # Document root directory (server, location)
 
-# Internal locations
+# Internal locations for security
 location @internal {
-    internal;                            # Only internal redirects
+    internal;                            # Only allow internal redirects (location)
 }
 ```
 
@@ -99,25 +99,25 @@ location @internal {
 
 ### Basic Proxy
 ```nginx
-proxy_pass http://backend;                # Proxy to backend
-proxy_pass http://192.168.1.10:8080;     # Direct proxy
-proxy_pass http://upstream;              # Upstream proxy
+proxy_pass http://backend;                # Forward requests to backend upstream (location)
+proxy_pass http://192.168.1.10:8080;     # Forward to specific server (location)
+proxy_pass http://upstream;              # Forward to upstream group (location)
 ```
 
 ### Proxy Headers
 ```nginx
-proxy_set_header Host $host;             # Preserve host header
-proxy_set_header X-Real-IP $remote_addr; # Real client IP
-proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-proxy_set_header X-Forwarded-Proto $scheme;
-proxy_set_header X-Forwarded-Host $server_name;
+proxy_set_header Host $host;             # Preserve original host header (location)
+proxy_set_header X-Real-IP $remote_addr; # Pass real client IP address (location)
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; # Forward client IP chain (location)
+proxy_set_header X-Forwarded-Proto $scheme; # Pass original protocol (http/https) (location)
+proxy_set_header X-Forwarded-Host $server_name; # Pass server name (location)
 ```
 
 ### Proxy Timeouts
 ```nginx
-proxy_connect_timeout 60s;               # Connection timeout
-proxy_send_timeout 60s;                 # Send timeout
-proxy_read_timeout 60s;                 # Read timeout
+proxy_connect_timeout 60s;               # Timeout for connecting to backend (location)
+proxy_send_timeout 60s;                 # Timeout for sending request to backend (location)
+proxy_read_timeout 60s;                 # Timeout for reading response from backend (location)
 ```
 
 ### Proxy Buffering
