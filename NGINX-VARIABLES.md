@@ -118,6 +118,133 @@ $upstream_addr        # Upstream server address
 $upstream_status      # Upstream response status
 $upstream_response_time # Upstream response time
 $upstream_connect_time # Upstream connect time
+$upstream_header_time # Upstream header time
+$upstream_bytes_received # Bytes received from upstream
+$upstream_bytes_sent # Bytes sent to upstream
+$upstream_cache_status # Cache status (HIT, MISS, BYPASS, EXPIRED)
+```
+
+## HTTP/2 Variables
+
+```nginx
+$http2                # HTTP/2 protocol version
+$http2_stream_id      # HTTP/2 stream ID
+$http2_stream_priority # HTTP/2 stream priority
+$http2_stream_dependency # HTTP/2 stream dependency
+```
+
+## Cache Variables
+
+```nginx
+$upstream_cache_status # Cache status (HIT, MISS, BYPASS, EXPIRED, STALE, UPDATING)
+$cache_status         # Same as $upstream_cache_status
+$cache_valid          # Cache validity status
+$cache_age            # Cache age in seconds
+$cache_modified       # Cache modification time
+```
+
+## Rate Limiting Variables
+
+```nginx
+$limit_req_status     # Rate limit status (PASS, DELAY, REJECT)
+$limit_conn_status    # Connection limit status (PASS, REJECT)
+$limit_rate           # Current rate limit
+$limit_conn           # Current connection limit
+```
+
+## Real-time Monitoring Variables
+
+```nginx
+$connections_active   # Active connections
+$connections_reading  # Connections in reading state
+$connections_writing  # Connections in writing state
+$connections_waiting  # Connections in waiting state
+$connections_accepted # Total accepted connections
+$connections_handled # Total handled connections
+$requests_total      # Total requests
+```
+
+## Performance Variables
+
+```nginx
+$request_time         # Request processing time
+$upstream_response_time # Upstream response time
+$upstream_connect_time # Upstream connect time
+$upstream_header_time # Upstream header time
+$pipe                 # "p" if pipelined, "." otherwise
+$connection_requests  # Number of requests in connection
+$connection           # Connection serial number
+```
+
+## Security Variables
+
+```nginx
+$ssl_protocol         # SSL protocol version
+$ssl_cipher           # SSL cipher suite
+$ssl_session_id       # SSL session ID
+$ssl_client_verify    # SSL client verification status
+$ssl_client_s_dn      # SSL client subject DN
+$ssl_client_i_dn      # SSL client issuer DN
+$ssl_client_fingerprint # SSL client certificate fingerprint
+```
+
+## Custom Variables
+
+### Map Context Variables
+```nginx
+# Create custom variables
+map $http_user_agent $mobile {
+    default 0;
+    ~*mobile 1;
+    ~*android 1;
+    ~*iphone 1;
+}
+
+map $http_user_agent $is_bot {
+    default 0;
+    ~*bot 1;
+    ~*crawler 1;
+    ~*spider 1;
+}
+
+# Usage
+if ($mobile) {
+    rewrite ^ /mobile$uri;
+}
+
+if ($is_bot) {
+    return 403;
+}
+```
+
+### Geo Context Variables
+```nginx
+# Geographic variables
+geo $country {
+    default US;
+    192.168.1.0/24 CA;
+    10.0.0.0/8 US;
+    172.16.0.0/12 EU;
+}
+
+# Usage
+if ($country = "EU") {
+    return 301 https://eu.example.com$request_uri;
+}
+```
+
+### Split Clients Variables
+```nginx
+# A/B testing variables
+split_clients "${remote_addr}${http_user_agent}" $variant {
+    50% "A";
+    50% "B";
+}
+
+# Usage
+if ($variant = "A") {
+    rewrite ^ /version-a$uri;
+}
 ```
 
 ## Common Usage Examples
@@ -176,6 +303,62 @@ log_format upstream '$remote_addr - $upstream_addr [$time_local] '
 location /api/ {
     proxy_pass http://backend;
     access_log /var/log/nginx/upstream.log upstream;
+}
+```
+
+### Cache Monitoring
+```nginx
+# Log cache status
+log_format cache '$remote_addr - [$time_local] "$request" '
+                '$status $upstream_cache_status $upstream_response_time';
+
+# Use in location
+location /api/ {
+    proxy_cache my_cache;
+    proxy_pass http://backend;
+    access_log /var/log/nginx/cache.log cache;
+}
+```
+
+### Rate Limiting Monitoring
+```nginx
+# Log rate limit status
+log_format rate_limit '$remote_addr - [$time_local] "$request" '
+                     '$status $limit_req_status $limit_conn_status';
+
+# Use in location
+location /api/ {
+    limit_req zone=api burst=20 nodelay;
+    limit_conn conn_limit_per_ip 10;
+    access_log /var/log/nginx/rate_limit.log rate_limit;
+    proxy_pass http://backend;
+}
+```
+
+### Performance Monitoring
+```nginx
+# Log performance metrics
+log_format performance '$remote_addr - [$time_local] "$request" '
+                     '$status $request_time $upstream_response_time '
+                     '$upstream_connect_time $upstream_header_time';
+
+# Use in location
+location /api/ {
+    proxy_pass http://backend;
+    access_log /var/log/nginx/performance.log performance;
+}
+```
+
+### Security Monitoring
+```nginx
+# Log security events
+log_format security '$remote_addr - [$time_local] "$request" '
+                   '$status $http_user_agent $ssl_protocol $ssl_cipher';
+
+# Use in location
+location / {
+    access_log /var/log/nginx/security.log security;
+    try_files $uri $uri/ /index.html;
 }
 ```
 
@@ -298,6 +481,132 @@ if ($variant = "A") {
 }
 ```
 
+## Advanced Variable Usage Patterns
+
+### Dynamic Content Routing
+```nginx
+# Route based on user agent
+map $http_user_agent $backend {
+    default backend_web;
+    ~*mobile backend_mobile;
+    ~*bot backend_api;
+}
+
+# Route based on request method
+map $request_method $method_backend {
+    GET backend_read;
+    POST backend_write;
+    PUT backend_write;
+    DELETE backend_write;
+}
+
+# Usage
+location / {
+    proxy_pass http://$backend;
+}
+```
+
+### Conditional Headers
+```nginx
+# Add headers based on conditions
+map $http_user_agent $add_mobile_header {
+    default "";
+    ~*mobile "X-Mobile: 1";
+}
+
+# Usage
+location / {
+    add_header $add_mobile_header;
+    try_files $uri $uri/ /index.html;
+}
+```
+
+### Dynamic Rate Limiting
+```nginx
+# Different rates for different user agents
+map $http_user_agent $rate_limit {
+    default "10r/s";
+    ~*bot "1r/s";
+    ~*mobile "5r/s";
+}
+
+# Usage
+location / {
+    limit_req zone=dynamic rate=$rate_limit burst=20 nodelay;
+    proxy_pass http://backend;
+}
+```
+
+### Geographic Content
+```nginx
+# Different content for different countries
+geo $country {
+    default US;
+    192.168.1.0/24 CA;
+    10.0.0.0/8 US;
+    172.16.0.0/12 EU;
+}
+
+# Usage
+location / {
+    if ($country = "EU") {
+        return 301 https://eu.example.com$request_uri;
+    }
+    try_files $uri $uri/ /index.html;
+}
+```
+
+### A/B Testing
+```nginx
+# A/B testing with split clients
+split_clients "${remote_addr}${http_user_agent}" $variant {
+    50% "A";
+    50% "B";
+}
+
+# Usage
+location / {
+    if ($variant = "A") {
+        rewrite ^ /version-a$uri;
+    }
+    if ($variant = "B") {
+        rewrite ^ /version-b$uri;
+    }
+    try_files $uri $uri/ /index.html;
+}
+```
+
+### Cache Control
+```nginx
+# Cache control based on request
+map $request_uri $cache_control {
+    default "public, max-age=3600";
+    ~*\.(css|js|png|jpg|jpeg|gif|ico|svg)$ "public, max-age=31536000";
+    ~*\.(html|htm)$ "public, max-age=0";
+}
+
+# Usage
+location / {
+    add_header Cache-Control $cache_control;
+    try_files $uri $uri/ /index.html;
+}
+```
+
+### Security Headers
+```nginx
+# Security headers based on request
+map $request_uri $security_headers {
+    default "X-Frame-Options: SAMEORIGIN";
+    ~*\.(css|js|png|jpg|jpeg|gif|ico|svg)$ "X-Frame-Options: DENY";
+}
+
+# Usage
+location / {
+    add_header $security_headers;
+    try_files $uri $uri/ /index.html;
+}
+```
+
 ## Variable Scope
 
 Variables are available in different contexts:
@@ -314,6 +623,38 @@ Variables are available in different contexts:
 - Use `$binary_remote_addr` instead of `$remote_addr` for rate limiting
 - Cache frequently used variables with `map`
 - Avoid complex regex in variable evaluation
+- Use `$request_time` for performance monitoring
+- Use `$upstream_response_time` for upstream monitoring
+
+## Debugging Variables
+
+### Common Debug Variables
+```nginx
+# Debug request processing
+add_header X-Debug-Request-Time $request_time;
+add_header X-Debug-Upstream-Time $upstream_response_time;
+add_header X-Debug-Cache-Status $upstream_cache_status;
+add_header X-Debug-Rate-Limit $limit_req_status;
+
+# Debug connection info
+add_header X-Debug-Connection $connection;
+add_header X-Debug-Connection-Requests $connection_requests;
+add_header X-Debug-Pipe $pipe;
+```
+
+### Error Debugging
+```nginx
+# Debug error conditions
+if ($status = 404) {
+    add_header X-Debug-Error "File not found: $request_uri";
+}
+if ($status = 500) {
+    add_header X-Debug-Error "Internal server error";
+}
+if ($upstream_status = 502) {
+    add_header X-Debug-Error "Bad gateway: $upstream_addr";
+}
+```
 
 ---
 

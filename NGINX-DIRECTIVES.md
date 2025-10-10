@@ -208,6 +208,360 @@ ssl_stapling on;                         # OCSP stapling
 ssl_stapling_verify on;                  # OCSP verification
 ```
 
+## HTTP/2 and HTTP/3 Configuration
+
+### HTTP/2 Directives
+```nginx
+# HTTP/2 server
+listen 443 ssl http2;
+
+# HTTP/2 optimizations
+http2_max_field_size 4k;                 # Max header field size
+http2_max_header_size 16k;               # Max header size
+http2_body_preread_size 64k;             # Body preread size
+http2_idle_timeout 3m;                   # Idle timeout
+http2_recv_timeout 4m;                   # Receive timeout
+```
+
+### HTTP/3 Directives (Nginx Plus)
+```nginx
+# HTTP/3 server
+listen 443 ssl http3;
+
+# HTTP/3 optimizations
+quic_retry on;                           # QUIC retry mechanism
+quic_gso on;                             # Generic Segmentation Offload
+quic_host_key /path/to/host.key;        # Host key for QUIC
+```
+
+## Advanced Caching Directives
+
+### Proxy Cache
+```nginx
+# Cache path configuration
+proxy_cache_path /var/cache/nginx 
+    levels=1:2 
+    keys_zone=my_cache:10m 
+    max_size=1g 
+    inactive=60m 
+    use_temp_path=off;
+
+# Cache directives
+proxy_cache my_cache;                    # Enable cache
+proxy_cache_valid 200 302 10m;          # Cache valid responses
+proxy_cache_valid 404 1m;               # Cache 404s for 1 minute
+proxy_cache_use_stale error timeout updating; # Use stale cache
+proxy_cache_bypass $no_cache;           # Bypass cache condition
+proxy_no_cache $no_cache;               # Don't cache condition
+proxy_cache_key $scheme$proxy_host$request_uri; # Cache key
+```
+
+### FastCGI Cache
+```nginx
+# FastCGI cache path
+fastcgi_cache_path /var/cache/nginx/fastcgi 
+    levels=1:2 
+    keys_zone=php_cache:10m 
+    max_size=1g 
+    inactive=60m;
+
+# FastCGI cache directives
+fastcgi_cache php_cache;                # Enable FastCGI cache
+fastcgi_cache_valid 200 60m;             # Cache valid responses
+fastcgi_cache_valid 404 1m;              # Cache 404s
+fastcgi_cache_bypass $no_cache;        # Bypass cache
+fastcgi_no_cache $no_cache;             # Don't cache
+fastcgi_cache_key $scheme$request_method$host$request_uri;
+```
+
+### Cache Purging
+```nginx
+# Cache purge location
+location ~ /purge(/.*) {
+    proxy_cache_purge my_cache $scheme$host$1;
+    access_log off;
+}
+```
+
+## Advanced Rate Limiting
+
+### DDoS Protection
+```nginx
+# Multiple rate limit zones
+limit_req_zone $binary_remote_addr zone=general:10m rate=1r/s;
+limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+limit_req_zone $binary_remote_addr zone=upload:10m rate=1r/s;
+
+# Connection limiting
+limit_conn_zone $binary_remote_addr zone=conn_limit_per_ip:10m;
+limit_conn_zone $server_name zone=conn_limit_per_server:10m;
+
+# Apply rate limiting
+server {
+    listen 80;
+    server_name example.com;
+    
+    # General rate limiting
+    limit_req zone=general burst=5 nodelay;
+    limit_conn conn_limit_per_ip 10;
+    limit_conn conn_limit_per_server 100;
+    
+    # API endpoints
+    location /api/ {
+        limit_req zone=api burst=20 nodelay;
+        proxy_pass http://backend;
+    }
+    
+    # Login endpoint
+    location /login {
+        limit_req zone=login burst=3 nodelay;
+        proxy_pass http://backend;
+    }
+    
+    # Upload endpoint
+    location /upload {
+        limit_req zone=upload burst=2 nodelay;
+        client_max_body_size 100M;
+        proxy_pass http://backend;
+    }
+}
+```
+
+### Advanced Rate Limiting Patterns
+```nginx
+# Rate limiting by user agent
+map $http_user_agent $is_bot {
+    default 0;
+    ~*bot 1;
+    ~*crawler 1;
+    ~*spider 1;
+}
+
+# Rate limiting by country
+geo $country {
+    default US;
+    192.168.1.0/24 CA;
+    10.0.0.0/8 US;
+}
+
+# Different rates for different countries
+limit_req_zone $binary_remote_addr zone=us_rate:10m rate=10r/s;
+limit_req_zone $binary_remote_addr zone=ca_rate:10m rate=5r/s;
+
+location / {
+    if ($is_bot) {
+        limit_req zone=general burst=1 nodelay;
+    }
+    if ($country = "US") {
+        limit_req zone=us_rate burst=20 nodelay;
+    }
+    if ($country = "CA") {
+        limit_req zone=ca_rate burst=10 nodelay;
+    }
+    proxy_pass http://backend;
+}
+```
+
+## Security Hardening Directives
+
+### Security Headers
+```nginx
+# Security headers
+add_header X-Frame-Options "SAMEORIGIN" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-XSS-Protection "1; mode=block" always;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'" always;
+add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+```
+
+### SSL/TLS Hardening
+```nginx
+# Modern SSL configuration
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384;
+ssl_prefer_server_ciphers off;
+ssl_session_cache shared:SSL:10m;
+ssl_session_timeout 10m;
+ssl_session_tickets off;
+ssl_stapling on;
+ssl_stapling_verify on;
+ssl_trusted_certificate /path/to/trusted_ca_cert.pem;
+ssl_dhparam /path/to/dhparam.pem;
+```
+
+### Access Control and Blocking
+```nginx
+# Block common attacks
+location ~* /(wp-admin|wp-login|xmlrpc|admin|administrator) {
+    return 403;
+}
+
+# Block suspicious requests
+if ($request_uri ~* "(union|select|insert|delete|drop|create|alter|exec)") {
+    return 403;
+}
+
+# Block bad user agents
+if ($http_user_agent ~* "(bot|crawler|spider|scraper|curl|wget)") {
+    return 403;
+}
+
+# Block empty user agents
+if ($http_user_agent = "") {
+    return 403;
+}
+
+# Block requests with suspicious headers
+if ($http_x_forwarded_for ~* "(127\.0\.0\.1|localhost)") {
+    return 403;
+}
+```
+
+## Monitoring and Metrics Directives
+
+### Status and Monitoring
+```nginx
+# Nginx status
+location /nginx_status {
+    stub_status on;
+    access_log off;
+    allow 127.0.0.1;
+    allow 192.168.1.0/24;
+    deny all;
+}
+
+# Health check endpoint
+location /health {
+    access_log off;
+    return 200 "healthy\n";
+    add_header Content-Type text/plain;
+}
+
+# Metrics endpoint
+location /metrics {
+    access_log off;
+    return 200 "nginx_up 1\n";
+    add_header Content-Type text/plain;
+}
+```
+
+### Advanced Logging
+```nginx
+# Custom log formats
+log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                '$status $body_bytes_sent "$http_referer" '
+                '"$http_user_agent" "$http_x_forwarded_for"';
+
+log_format json_combined escape=json
+    '{"time":"$time_iso8601","remote_addr":"$remote_addr",'
+    '"request":"$request","status":"$status","body_bytes_sent":"$body_bytes_sent",'
+    '"http_referer":"$http_referer","http_user_agent":"$http_user_agent"}';
+
+log_format upstream '$remote_addr - $upstream_addr [$time_local] '
+                   '"$request" $upstream_status $upstream_response_time';
+
+# Apply logging
+access_log /var/log/nginx/access.log main;
+access_log /var/log/nginx/access.json json_combined;
+```
+
+## Debugging Directives
+
+### Error Logging
+```nginx
+# Error log levels
+error_log /var/log/nginx/error.log warn;
+error_log /var/log/nginx/debug.log debug;
+
+# Debug specific connections
+debug_connection 192.168.1.0/24;
+debug_connection 127.0.0.1;
+
+# Debug specific locations
+location /debug {
+    error_log /var/log/nginx/debug.log debug;
+    return 200 "Debug mode enabled\n";
+}
+```
+
+### Performance Debugging
+```nginx
+# Add timing headers
+add_header X-Response-Time $request_time always;
+add_header X-Upstream-Response-Time $upstream_response_time always;
+add_header X-Cache-Status $upstream_cache_status always;
+
+# Debug upstream
+upstream backend {
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    
+    # Health check
+    server 192.168.1.10:8080 max_fails=3 fail_timeout=30s;
+    server 192.168.1.11:8080 max_fails=3 fail_timeout=30s;
+}
+```
+
+## Performance Tuning Directives
+
+### Worker Optimization
+```nginx
+# Main context
+worker_processes auto;
+worker_rlimit_nofile 65535;
+worker_cpu_affinity auto;
+
+# Events context
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+    accept_mutex off;
+}
+```
+
+### HTTP Optimization
+```nginx
+# HTTP performance
+sendfile on;
+tcp_nopush on;
+tcp_nodelay on;
+keepalive_timeout 65;
+keepalive_requests 100;
+
+# Buffer optimization
+client_body_buffer_size 128k;
+client_max_body_size 10m;
+client_header_buffer_size 1k;
+large_client_header_buffers 4 4k;
+
+# Proxy optimization
+proxy_buffering on;
+proxy_buffer_size 4k;
+proxy_buffers 8 4k;
+proxy_busy_buffers_size 8k;
+```
+
+### Connection Pooling
+```nginx
+upstream backend {
+    server 192.168.1.10:8080;
+    server 192.168.1.11:8080;
+    
+    # Connection pooling
+    keepalive 32;
+    keepalive_requests 100;
+    keepalive_timeout 60s;
+    
+    # Health checks
+    server 192.168.1.10:8080 max_conns=100;
+    server 192.168.1.11:8080 max_conns=100;
+}
+```
+
 ## Headers and CORS
 
 ### Security Headers
